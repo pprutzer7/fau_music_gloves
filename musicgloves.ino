@@ -11,10 +11,10 @@ int flexbaseline;
 void setup() {
   pinMode(9, OUTPUT);
   Serial.begin(9600);
-  a = 400;
-  b = 330;
-  c = 260;
-  d = 190;
+  a = 450;
+  b = 350;
+  c = 250;
+  d = 150;
   x = 0;
   y = 0;
   flexbaseline = (analogRead(0) + analogRead(1) + analogRead(2) + analogRead(3))/4;
