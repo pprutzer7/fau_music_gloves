@@ -8,6 +8,7 @@ int flex5;
 int flex6;
 int octave;
 int effect;
+int s;
 int x;
 int y;
 int flexbaseline;
@@ -62,16 +63,17 @@ void squareWaveQuadNote(int note1, int note2, int note3, int note4);
 #define NOTE_G5 292;
 
 void setup() {
-  pinMode(9, OUTPUT);
   Serial.begin(9600);
+  s = 8;
+  pinMode(s, OUTPUT);
   octave = 0;
-  effect = 1;
+  effect = 0;
   note = 0;
   notes[0] = NOTE_A1;
   notes[1] = NOTE_B1;
   notes[2] = NOTE_C1;
   notes[3] = NOTE_D1;
-  x = 100;
+  x = 50;
   //y = 0;
   //get an initial single read for flexbaseline so that the initial loop read to get a flexbaseline works
   //properly(see how the next loop is designed - it needs flexbaseline to already hold a valid value)
@@ -85,17 +87,20 @@ void loop() {
     flex2 = analogRead(1);
     flex3 = analogRead(2);
     flex4 = analogRead(3);
-    //flex5 = analogRead(4);
+    flex5 = analogRead(4);
     //flex6 = analogRead(5);
-    flexbaseline = (flexbaseline + (flex1 + flex2 + flex3 + flex4/* + flex5 + flex6*/)/4)/2;
+    flexbaseline = (flexbaseline + (flex1 + flex2 + flex3 + flex4 + flex5/* + flex6*/)/5)/2;
+    Serial.println("initializing flex baseline");
   }
+
+  Serial.println("Main Loop");
 
   //reset all flex sensor values to zero so they can be reread
   flex1 = 0;
   flex2 = 0;
   flex3 = 0;
   flex4 = 0;
-  //flex5 = 0;
+  flex5 = 0;
   //flex6 = 0;
 
 
@@ -105,26 +110,26 @@ void loop() {
     flex2 += analogRead(1);
     flex3 += analogRead(2);
     flex4 += analogRead(3);
-    //flex5 += analogRead(4);
+    flex5 += analogRead(4);
     //flex6 += analogRead(5);
   }
   flex1 = flex1/10;
   flex2 = flex2/10;
   flex3 = flex3/10;
   flex4 = flex4/10;
-  //flex5 = flex5/10;
+  flex5 = flex5/10;
   //flex6 = flex6/10;
 
 
   //if flex sensor five is activated change all notes to next octave, 1second delay to make sure it only reads once
-  /*if(flex5 > (flexbaseline + x)){
+  if(flex5 > (flexbaseline + x)){
     octave++;
     //if next spot is not a valid ocatave then return to octave 0
     if(octave > 4){
       octave = 0;
     }
     delay(1000);
-  }*/
+  }
 
 
   //if flex sensor six is activated change the effect on the notes to the next one, 1second delay to make sure it only reads once
@@ -175,6 +180,7 @@ void loop() {
 
   //this is the tone making loop, there is one case for each combination of tones so that you may overly all notes on each other at the same time
   while(flex1 > (flexbaseline + x) || flex2 > (flexbaseline + x) || (flex3 > (flexbaseline + x)) || flex4 > (flexbaseline + x)){
+    Serial.println("In Tone Loop");
     if(flex1 > (flexbaseline + x) && flex2 < (flexbaseline + x) && flex3 < (flexbaseline + x) && flex4 < (flexbaseline + x)){
       //depending on which effect is currently active, either make a sawtooth or a squarewave note
       if(effect == 0){
@@ -304,9 +310,10 @@ void loop() {
 
 //function to create one period of a squarewave tone at frequency 'note'
 void squareWaveNote(int note){
-  digitalWrite(9, HIGH);
+  Serial.println("Making SquareWave Tone");
+  digitalWrite(s, HIGH);
   delayMicroseconds(notes[note]);
-  digitalWrite(9, LOW);
+  digitalWrite(s, LOW);
   delayMicroseconds(notes[note]);
   return;
 }
@@ -337,43 +344,44 @@ void squareWaveQuadNote(int note1, int note2, int note3, int note4){
 
 //function that simulates a sawtooth wave using multiple squarewaves to create one period of a sawtooth tone at frequency 'note'
 void sawToothNote(int note){
-      digitalWrite(9, HIGH);
+      Serial.println("Making SawTooth Tone");
+      digitalWrite(s, HIGH);
       delayMicroseconds(((notes[note])/61));
-      digitalWrite(9, LOW);
+      digitalWrite(s, LOW);
       delayMicroseconds(6*((notes[note])/61));
-      digitalWrite(9, HIGH);
+      digitalWrite(s, HIGH);
       delayMicroseconds(2*((notes[note])/61));
-      digitalWrite(9, LOW);
+      digitalWrite(s, LOW);
       delayMicroseconds(5*((notes[note])/61));
-      digitalWrite(9, HIGH);
+      digitalWrite(s, HIGH);
       delayMicroseconds(3*((notes[note])/61));
-      digitalWrite(9, LOW);
+      digitalWrite(s, LOW);
       delayMicroseconds(4*((notes[note])/61));
-      digitalWrite(9, HIGH);
+      digitalWrite(s, HIGH);
       delayMicroseconds(4*((notes[note])/61));
-      digitalWrite(9, LOW);
+      digitalWrite(s, LOW);
       delayMicroseconds(2*((notes[note])/61));
-      digitalWrite(9, HIGH);
+      digitalWrite(s, HIGH);
       delayMicroseconds(6*((notes[note])/61));
-      digitalWrite(9, LOW);
+      digitalWrite(s, LOW);
       delayMicroseconds(((notes[note])/61));
-      digitalWrite(9, HIGH);
+      digitalWrite(s, HIGH);
       delayMicroseconds(4*((notes[note])/61));
-      digitalWrite(9, LOW);
+      digitalWrite(s, LOW);
       delayMicroseconds(2*((notes[note])/61));
-      digitalWrite(9, HIGH);
+      digitalWrite(s, HIGH);
       delayMicroseconds(3*((notes[note])/61));
-      digitalWrite(9, LOW);
+      digitalWrite(s, LOW);
       delayMicroseconds(4*((notes[note])/61));
-      digitalWrite(9, HIGH);
+      digitalWrite(s, HIGH);
       delayMicroseconds(2*((notes[note])/61));
-      digitalWrite(9, LOW);
+      digitalWrite(s, LOW);
       delayMicroseconds(5*((notes[note])/61));
-      digitalWrite(9, HIGH);
+      digitalWrite(s, HIGH);
       delayMicroseconds(((notes[note])/61));
-      digitalWrite(9, LOW);
+      digitalWrite(s, LOW);
       delayMicroseconds(6*((notes[note])/61));
-      digitalWrite(9, LOW);
+      digitalWrite(s, LOW);
       delayMicroseconds(notes[note]);
       return;
 }
