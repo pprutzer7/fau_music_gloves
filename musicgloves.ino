@@ -65,14 +65,14 @@ void setup() {
   pinMode(9, OUTPUT);
   Serial.begin(9600);
   octave = 0;
-  effect = 0;
+  effect = 1;
   note = 0;
   notes[0] = NOTE_A1;
   notes[1] = NOTE_B1;
   notes[2] = NOTE_C1;
   notes[3] = NOTE_D1;
-  x = 0;
-  y = 0;
+  x = 100;
+  //y = 0;
   //get an initial single read for flexbaseline so that the initial loop read to get a flexbaseline works
   //properly(see how the next loop is designed - it needs flexbaseline to already hold a valid value)
   flexbaseline = (analogRead(0) + analogRead(1) + analogRead(2) + analogRead(3) + analogRead(4) + analogRead(5))/4;
@@ -85,9 +85,9 @@ void loop() {
     flex2 = analogRead(1);
     flex3 = analogRead(2);
     flex4 = analogRead(3);
-    flex5 = analogRead(4);
-    flex6 = analogRead(5);
-    flexbaseline = (flexbaseline + (flex1 + flex2 + flex3 + flex4 + flex5 + flex6)/6)/2;
+    //flex5 = analogRead(4);
+    //flex6 = analogRead(5);
+    flexbaseline = (flexbaseline + (flex1 + flex2 + flex3 + flex4/* + flex5 + flex6*/)/4)/2;
   }
 
   //reset all flex sensor values to zero so they can be reread
@@ -95,8 +95,8 @@ void loop() {
   flex2 = 0;
   flex3 = 0;
   flex4 = 0;
-  flex5 = 0;
-  flex6 = 0;
+  //flex5 = 0;
+  //flex6 = 0;
 
 
   //average each flex sensor 10 times to get a more accurate reading
@@ -105,37 +105,37 @@ void loop() {
     flex2 += analogRead(1);
     flex3 += analogRead(2);
     flex4 += analogRead(3);
-    flex5 += analogRead(4);
-    flex6 += analogRead(5);
+    //flex5 += analogRead(4);
+    //flex6 += analogRead(5);
   }
   flex1 = flex1/10;
   flex2 = flex2/10;
   flex3 = flex3/10;
   flex4 = flex4/10;
-  flex5 = flex5/10;
-  flex6 = flex6/10;
+  //flex5 = flex5/10;
+  //flex6 = flex6/10;
 
 
   //if flex sensor five is activated change all notes to next octave, 1second delay to make sure it only reads once
-  if(flex5 > (flexbaseline + 50)){
+  /*if(flex5 > (flexbaseline + x)){
     octave++;
     //if next spot is not a valid ocatave then return to octave 0
     if(octave > 4){
       octave = 0;
     }
     delay(1000);
-  }
+  }*/
 
 
   //if flex sensor six is activated change the effect on the notes to the next one, 1second delay to make sure it only reads once
-  if(flex6 > (flexbaseline + 50)){
+  /*if(flex6 > (flexbaseline + x)){
     effect++;
     //if next effect is not a valid effect then return to effect 0
     if(effect > 1){
       effect = 0;
     }
     delay(1000);
-  }
+  }*/
   //depending on which octave is currently active, set notes accordingly in the notes array
   if(octave == 0){
     notes[0] = NOTE_A1;
@@ -174,8 +174,8 @@ void loop() {
 
 
   //this is the tone making loop, there is one case for each combination of tones so that you may overly all notes on each other at the same time
-  while(flex1 > (flexbaseline + 50) || flex2 > (flexbaseline + 50) || (flex3 > (flexbaseline + 50)) || flex4 > (flexbaseline + 50)){
-    if(flex1 > (flexbaseline + 50) && flex2 < (flexbaseline + 50) && flex3 < (flexbaseline + 50) && flex4 < (flexbaseline + 50)){
+  while(flex1 > (flexbaseline + x) || flex2 > (flexbaseline + x) || (flex3 > (flexbaseline + x)) || flex4 > (flexbaseline + x)){
+    if(flex1 > (flexbaseline + x) && flex2 < (flexbaseline + x) && flex3 < (flexbaseline + x) && flex4 < (flexbaseline + x)){
       //depending on which effect is currently active, either make a sawtooth or a squarewave note
       if(effect == 0){
         sawToothNote(0);
@@ -183,98 +183,98 @@ void loop() {
           squareWaveNote(0);
       }
     }
-    if(flex2 > (flexbaseline + 50) && flex1 < (flexbaseline + 50) && flex3 < (flexbaseline + 50) && flex4 < (flexbaseline + 50)){
+    if(flex2 > (flexbaseline + x) && flex1 < (flexbaseline + x) && flex3 < (flexbaseline + x) && flex4 < (flexbaseline + x)){
       if(effect == 0){
         sawToothNote(1);
       }else{
           squareWaveNote(1);
       }
     }
-    if(flex3 > (flexbaseline + 50) && flex1 < (flexbaseline + 50) && flex2 < (flexbaseline + 50) && flex4 < (flexbaseline + 50)){
+    if(flex3 > (flexbaseline + x) && flex1 < (flexbaseline + x) && flex2 < (flexbaseline + x) && flex4 < (flexbaseline + x)){
       if(effect == 0){
         sawToothNote(2);
       }else{
           squareWaveNote(2);
       }
     }
-    if(flex4 > (flexbaseline + 50) && flex1 < (flexbaseline + 50) && flex2 < (flexbaseline + 50) && flex3 < (flexbaseline + 50)){
+    if(flex4 > (flexbaseline + x) && flex1 < (flexbaseline + x) && flex2 < (flexbaseline + x) && flex3 < (flexbaseline + x)){
       if(effect == 0){
         sawToothNote(3);
       }else{
           squareWaveNote(3);
       }
     }
-    if(flex1 > (flexbaseline + 50) && flex2 > (flexbaseline + 50) && flex3 < (flexbaseline + 50) && flex4 < (flexbaseline + 50)){
+    if(flex1 > (flexbaseline + x) && flex2 > (flexbaseline + x) && flex3 < (flexbaseline + x) && flex4 < (flexbaseline + x)){
       if(effect == 0){
         sawToothDoubleNote(0,1);
       }else{
           squareWaveDoubleNote(0,1);
       }
     }
-    if(flex1 > (flexbaseline + 50) && flex2 < (flexbaseline + 50) && flex3 > (flexbaseline + 50) && flex4 < (flexbaseline + 50)){
+    if(flex1 > (flexbaseline + x) && flex2 < (flexbaseline + x) && flex3 > (flexbaseline + x) && flex4 < (flexbaseline + x)){
       if(effect == 0){
         sawToothDoubleNote(0,2);
       }else{
           squareWaveDoubleNote(0,2);
       }
     }
-    if(flex1 > (flexbaseline + 50) && flex2 < (flexbaseline + 50) && flex3 < (flexbaseline + 50) && flex4 > (flexbaseline + 50)){
+    if(flex1 > (flexbaseline + x) && flex2 < (flexbaseline + x) && flex3 < (flexbaseline + x) && flex4 > (flexbaseline + x)){
       if(effect == 0){
         sawToothDoubleNote(0,3);
       }else{
           squareWaveDoubleNote(0,3);
       }
     }
-    if(flex1 < (flexbaseline + 50) && flex2 > (flexbaseline + 50) && flex3 > (flexbaseline + 50) && flex4 < (flexbaseline + 50)){
+    if(flex1 < (flexbaseline + x) && flex2 > (flexbaseline + x) && flex3 > (flexbaseline + x) && flex4 < (flexbaseline + x)){
       if(effect == 0){
         sawToothDoubleNote(1,2);
       }else{
           squareWaveDoubleNote(1,2);
       }
     }
-    if(flex1 < (flexbaseline + 50) && flex2 > (flexbaseline + 50) && flex3 < (flexbaseline + 50) && flex4 > (flexbaseline + 50)){
+    if(flex1 < (flexbaseline + x) && flex2 > (flexbaseline + x) && flex3 < (flexbaseline + x) && flex4 > (flexbaseline + x)){
       if(effect == 0){
         sawToothDoubleNote(1,3);
       }else{
           squareWaveDoubleNote(1,3);
       }
     }
-    if(flex1 < (flexbaseline + 50) && flex2 < (flexbaseline + 50) && flex3 > (flexbaseline + 50) && flex4 > (flexbaseline + 50)){
+    if(flex1 < (flexbaseline + x) && flex2 < (flexbaseline + x) && flex3 > (flexbaseline + x) && flex4 > (flexbaseline + x)){
       if(effect == 0){
         sawToothDoubleNote(2,3);
       }else{
           squareWaveDoubleNote(2,3);
       }
     }
-    if(flex1 > (flexbaseline + 50) && flex2 > (flexbaseline + 50) && flex3 > (flexbaseline + 50) && flex4 < (flexbaseline + 50)){
+    if(flex1 > (flexbaseline + x) && flex2 > (flexbaseline + x) && flex3 > (flexbaseline + x) && flex4 < (flexbaseline + x)){
       if(effect == 0){
         sawToothTripleNote(0,1,2);
       }else{
           squareWaveTripleNote(0,1,2);
       }
     }
-    if(flex1 > (flexbaseline + 50) && flex2 > (flexbaseline + 50) && flex3 < (flexbaseline + 50) && flex4 > (flexbaseline + 50)){
+    if(flex1 > (flexbaseline + x) && flex2 > (flexbaseline + x) && flex3 < (flexbaseline + x) && flex4 > (flexbaseline + x)){
       if(effect == 0){
         sawToothTripleNote(0,1,3);
       }else{
           squareWaveTripleNote(0,1,3);
       }
     }
-    if(flex1 > (flexbaseline + 50) && flex2 < (flexbaseline + 50) && flex3 > (flexbaseline + 50) && flex4 > (flexbaseline + 50)){
+    if(flex1 > (flexbaseline + x) && flex2 < (flexbaseline + x) && flex3 > (flexbaseline + x) && flex4 > (flexbaseline + x)){
       if(effect == 0){
         sawToothTripleNote(0,2,3);
       }else{
           squareWaveTripleNote(0,2,3);
       }
     }
-    if(flex1 > (flexbaseline + 50) && flex2 > (flexbaseline + 50) && flex3 > (flexbaseline + 50) && flex4 < (flexbaseline + 50)){
+    if(flex1 > (flexbaseline + x) && flex2 > (flexbaseline + x) && flex3 > (flexbaseline + x) && flex4 < (flexbaseline + x)){
       if(effect == 0){
         sawToothTripleNote(1,2,3);
       }else{
           squareWaveTripleNote(1,2,3);
       }
     }
-    if(flex1 > (flexbaseline + 50) && flex2 > (flexbaseline + 50) && flex3 > (flexbaseline + 50) && flex4 > (flexbaseline + 50)){
+    if(flex1 > (flexbaseline + x) && flex2 > (flexbaseline + x) && flex3 > (flexbaseline + x) && flex4 > (flexbaseline + x)){
       if(effect == 0){
         sawToothQuadNote(0,1,2,4);
       }else{
