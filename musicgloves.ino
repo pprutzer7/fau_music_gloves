@@ -1,5 +1,6 @@
 #include <SoftwareSerial.h>
 int notes [7];
+float floatnote;
 int note;
 byte rxPin = 10;
 byte txPin = 11;
@@ -12,7 +13,11 @@ int r2;
 int r3;
 int r4;
 int r5;
+int aaa;
+int bbb;
+int ccc;
 int yy;
+boolean blackKeys;
 //int et;
 int previousR[5];
 int wait;
@@ -53,71 +58,93 @@ float pt3;
 float pt4;
 int rebaseline;
 int y;
-int rv;
+float rv;
 int flexbaseline;
 void sawToothNote(int note);
 void triangleWaveNote(int note);
 void squareWaveNote(int note);
+void halfSine(int note);
 
 
-#define NOTE_A1 8950;
-#define NOTE_A2 4450;
-#define NOTE_A3 2150;
-#define NOTE_A4 1015;
-#define NOTE_A5 444;
 
-#define NOTE_B1 8000;
-#define NOTE_B2 4000;
-#define NOTE_B3 1900;
-#define NOTE_B4 900;
-#define NOTE_B5 385;
+#define NOTE_A1 4050;
+#define NOTE_A2 1700;
+#define NOTE_A3 550;
+#define NOTE_A4 51;
+#define NOTE_A5 8700;
 
-#define NOTE_C1 7450;
-#define NOTE_C2 3700;
-#define NOTE_C3 1750;
-#define NOTE_C4 825;
-#define NOTE_C5 353;
+#define NOTE_B1 3500;
+#define NOTE_B2 1400;
+#define NOTE_B3 435;
+#define NOTE_B4 40; 
+#define NOTE_B5 7700;
 
-#define NOTE_D1 6700;
-#define NOTE_D2 3280;
-#define NOTE_D3 1577;
-#define NOTE_D4 730;
-#define NOTE_D5 305;
+#define NOTE_C1 7000;
+#define NOTE_C2 3200;
+#define NOTE_C3 1300;
+#define NOTE_C4 360;
+#define NOTE_C5 15000;
 
-
-#define NOTE_E1 5925;
-#define NOTE_E2 2940;
-#define NOTE_E3 1392;
-#define NOTE_E4 640;
-#define NOTE_E5 260;
+#define NOTE_D1 6450;
+#define NOTE_D2 2850;
+#define NOTE_D3 1100;
+#define NOTE_D4 275;
+#define NOTE_D5 14000;
 
 
-#define NOTE_F1 5650;
-#define NOTE_F2 2760;
-#define NOTE_F3 1320;
-#define NOTE_F4 600;
-#define NOTE_F5 230;
+#define NOTE_E1 5450;
+#define NOTE_E2 2410;
+#define NOTE_E3 950;
+#define NOTE_E4 170;
+#define NOTE_E5 12000;
 
 
-#define NOTE_G1 5005;
-#define NOTE_G2 2395;
-#define NOTE_G3 1170;
-#define NOTE_G4 520;
-#define NOTE_G5 190;
+#define NOTE_F1 5100;
+#define NOTE_F2 2250;
+#define NOTE_F3 827;
+#define NOTE_F4 123;
+#define NOTE_F5 10700;
 
-#define NOTE_Ab2 4800;
-#define NOTE_Ab3 2350;
-#define NOTE_Ab4 1176;
-#define NOTE_Ab5 565;
 
-#define NOTE_Bb1 8400;
-#define NOTE_Bb2 4250;
-#define NOTE_Bb3 2102;
-#define NOTE_Bb4 1047;
-#define NOTE_Bb5 507;
+#define NOTE_G1 4600;
+#define NOTE_G2 2000;
+#define NOTE_G3 700;
+#define NOTE_G4 67;
+#define NOTE_G5 9500;
+
+#define NOTE_Ab1 9100;
+#define NOTE_Ab2 4300;
+#define NOTE_Ab3 1850;
+#define NOTE_Ab4 635;
+#define NOTE_Ab5 53;
+
+#define NOTE_Bb1 8100;
+#define NOTE_Bb2 3700;
+#define NOTE_Bb3 1583;
+#define NOTE_Bb4 485;
+#define NOTE_Bb5 42;
+
+#define NOTE_Db1 14500;
+#define NOTE_Db2 6800;
+#define NOTE_Db3 3100;
+#define NOTE_Db4 1235;
+#define NOTE_Db5 315;
+
+#define NOTE_Eb1 13000;
+#define NOTE_Eb2 5850;
+#define NOTE_Eb3 2600;
+#define NOTE_Eb4 1000;
+#define NOTE_Eb5 210;
+
+#define NOTE_Gb1 10150;
+#define NOTE_Gb2 4900;
+#define NOTE_Gb3 2140;
+#define NOTE_Gb4 760;
+#define NOTE_Gb5 87;
+
 
 void setup() {
-  while (!Serial) ;
+  //while (!Serial) ;
   Serial.begin(38400);
   s = 8;
   pinMode(s, OUTPUT);
@@ -127,10 +154,11 @@ void setup() {
   note = 0;
   fonote = 0;
   count = 0;
+  blackKeys = false;
   //rxPin = 10;
   //txPin = 11;
   serialconnection.begin(38400);
-  serialconnection.setTimeout(5);
+  serialconnection.setTimeout(3);
   notes[0] = NOTE_C1;
   notes[1] = NOTE_D1;
   notes[2] = NOTE_E1;
@@ -138,7 +166,7 @@ void setup() {
   notes[4] = NOTE_G1;
   notes[5] = NOTE_A1;
   notes[6] = NOTE_B1;
-  x = 150;
+  x = 200;
   p1 = 0;
   p2 = 0;
   p3 = 0;
@@ -205,11 +233,14 @@ void loop() {
     } else {
       if (doweupdate > 0) {
         Serial.println("throwing out junk for right glove outside tone loop");
-        junk[0] = input[0];
+        while(serialconnection.available() > 0){
+          serialconnection.read();
+        }
+        /*junk[0] = input[0];
         junk[1] = input[1];
         junk[2] = input[2];
         junk[3] = input[3];
-        junk[4] = input[4];
+        junk[4] = input[4];*/
       }
     }
   }
@@ -221,11 +252,11 @@ void loop() {
   flex3 = 0;
   flex4 = 0;
   flex5 = 0;
-  flex6 = r4;
+  flex6 = r1;
   flex7 = r2;
-  flex8 = r1;
-  flex9 = r5;
-  flex10 = r3;
+  flex8 = r3;
+  flex9 = r4;
+  flex10 = r5;
 
 
   //average each flex sensor 10 times to get a more accurate reading
@@ -247,17 +278,7 @@ void loop() {
 
   //if flex sensor five is activated change all notes to next octave, 1second delay to make sure it only reads once
   if (flex5 > (flexbaseline + (x + 50))) {
-    y = millis();
-      while((millis() - y) < 60){
-        yy = millis();
-        while((millis() - yy) < 15){
-        sawToothNote(6);
-        }
-        yy = millis();
-        while((millis() - yy) < 15){
-        sawToothNote(0);
-        }
-      }
+    delay(50);
     for (int i = 0; i < 5; i++) {
       flex5 += analogRead(5);
     }
@@ -268,8 +289,18 @@ void loop() {
       if (octave > 4) {
         octave = 0;
       }
-      
-      delay(600);
+      y = millis();
+      while((millis() - y) < 60){
+        yy = millis();
+        while((millis() - yy) < 15){
+        sawToothNote(6);
+        }
+        yy = millis();
+        while((millis() - yy) < 15){
+        sawToothNote(0);
+        }
+      }
+      delay(540);
     }
     focount = 2;
     focountlast = 1;
@@ -310,17 +341,21 @@ void loop() {
             r4 = input[3] * 4;
             r5 = input[4] * 4;
           } else {
-            if (doweupdate > 0) {
-              junk[0] = input[0];
-              junk[1] = input[1];
-              junk[2] = input[2];
-              junk[3] = input[3];
-              junk[4] = input[4];
-            }
+             if (doweupdate > 0) {
+        Serial.println("throwing out junk for right glove outside tone loop");
+        while(serialconnection.available() > 0){
+          serialconnection.read();
+        }
+        /*junk[0] = input[0];
+        junk[1] = input[1];
+        junk[2] = input[2];
+        junk[3] = input[3];
+        junk[4] = input[4];*/
+      }
           }
         }
       }
-      flex6 = r4;
+      flex6 = r1;
       /*effect = 6;
       y = millis();
       while((millis() - y) < 150){
@@ -335,9 +370,56 @@ void loop() {
     }
     
   }
+
+  if (flex10 > (flexbaseline + x)) {
+      
+      blackKeys = !blackKeys;
+      y = millis();
+      while((millis() - y) < 60){
+        squareWaveNote(6, 0);
+      }
+      y = millis();
+      while ((millis() - y) < 600) {
+        if (serialconnection.available() > 4) {
+          doweupdate = serialconnection.readBytes(input, 5);
+          if (doweupdate == 5) {
+            r1 = input[0] * 4;
+            r2 = input[1] * 4;
+            r3 = input[2] * 4;
+            r4 = input[3] * 4;
+            r5 = input[4] * 4;
+          } else {
+             if (doweupdate > 0) {
+        Serial.println("throwing out junk for right glove outside tone loop");
+        while(serialconnection.available() > 0){
+          serialconnection.read();
+        }
+        /*junk[0] = input[0];
+        junk[1] = input[1];
+        junk[2] = input[2];
+        junk[3] = input[3];
+        junk[4] = input[4];*/
+      }
+          }
+        }
+        flex10 = r5;
+      }
+      /*effect = 6;
+      y = millis();
+      while((millis() - y) < 150){
+      sawToothNote(6);
+      //sawToothNote();*/
+      //}
+      focount = 2;
+      focountlast = 1;
+      fcount = 2;
+      
+      //effect = et;
+    }
   //depending on which octave is currently active, set notes accordingly in the notes array
-  if (octave == 0) {
-    notes[0] = NOTE_A1;
+  if(blackKeys == false){
+  if (octave == 1) {
+    notes[0] = NOTE_C1;
     notes[1] = NOTE_D1;
     notes[2] = NOTE_E1;
     notes[3] = NOTE_F1;
@@ -345,7 +427,7 @@ void loop() {
     notes[5] = NOTE_A1;
     notes[6] = NOTE_B1;
   } else {
-    if (octave == 1) {
+    if (octave == 2) {
       notes[0] = NOTE_C2;
       notes[1] = NOTE_D2;
       notes[2] = NOTE_E2;
@@ -354,7 +436,7 @@ void loop() {
       notes[5] = NOTE_A2;
       notes[6] = NOTE_B2;
     } else {
-      if (octave == 2) {
+      if (octave == 3) {
         notes[0] = NOTE_C3;
         notes[1] = NOTE_D3;
         notes[2] = NOTE_E3;
@@ -363,7 +445,7 @@ void loop() {
         notes[5] = NOTE_A3;
         notes[6] = NOTE_B3;
       } else {
-        if (octave == 3) {
+        if (octave == 4) {
           notes[0] = NOTE_C4;
           notes[1] = NOTE_D4;
           notes[2] = NOTE_E4;
@@ -372,7 +454,7 @@ void loop() {
           notes[5] = NOTE_A4;
           notes[6] = NOTE_B4;
         } else {
-          if (octave == 4) {
+          if (octave == 0) {
             notes[0] = NOTE_C5;
             notes[1] = NOTE_D5;
             notes[2] = NOTE_E5;
@@ -384,6 +466,57 @@ void loop() {
         }
       }
     }
+  }
+  }else{
+    if (octave == 0) {
+    notes[0] = NOTE_Db1;
+    notes[1] = NOTE_Eb1;
+    notes[2] = NOTE_Gb1;
+    notes[3] = NOTE_Ab1;
+    notes[4] = NOTE_Bb1;
+    notes[5] = NOTE_A1;
+    notes[6] = NOTE_B1;
+  } else {
+    if (octave == 1) {
+      notes[0] = NOTE_Db2;
+      notes[1] = NOTE_Eb2;
+      notes[2] = NOTE_Gb2;
+      notes[3] = NOTE_Ab2;
+      notes[4] = NOTE_Bb2;
+      notes[5] = NOTE_A2;
+      notes[6] = NOTE_B2;
+    } else {
+      if (octave == 2) {
+        notes[0] = NOTE_Db3;
+        notes[1] = NOTE_Eb3;
+        notes[2] = NOTE_Gb3;
+        notes[3] = NOTE_Ab3;
+        notes[4] = NOTE_Bb3;
+        notes[5] = NOTE_A3;
+        notes[6] = NOTE_B3;
+      } else {
+        if (octave == 3) {
+          notes[0] = NOTE_Db4;
+          notes[1] = NOTE_Eb4;
+          notes[2] = NOTE_Gb4;
+          notes[3] = NOTE_Ab4;
+          notes[4] = NOTE_Bb4;
+          notes[5] = NOTE_A4;
+          notes[6] = NOTE_B4;
+        } else {
+          if (octave == 4) {
+            notes[0] = NOTE_Db5;
+            notes[1] = NOTE_Eb5;
+            notes[2] = NOTE_Gb5;
+            notes[3] = NOTE_Ab5;
+            notes[4] = NOTE_Bb5;
+            notes[5] = NOTE_A5;
+            notes[6] = NOTE_B5;
+          }
+        }
+      }
+    }
+  }
   }
 
   focount = 2;
@@ -417,9 +550,33 @@ void loop() {
   Serial.print(flexbaseline);
   Serial.print(" : ");
 
+    Serial.println(bbb);
+    Serial.print(bbb);
+    Serial.print("   ");
+    Serial.print(bbb);
+    Serial.print("   ");
+    Serial.print(bbb);
+    Serial.print("   ");
+    Serial.print(bbb);
+    Serial.print("   ");
+    Serial.print(bbb);
+    Serial.print("   ");
+    Serial.print(bbb);
+    Serial.print("   ");
+    Serial.print(bbb);
+    Serial.print("   ");
+    Serial.print(bbb);
+    Serial.print("   ");
+    Serial.print(bbb);
+    Serial.print("   ");
+    Serial.print(bbb);
+    Serial.print("   ");
+    Serial.println(bbb);
+
   rv = 0;
   //this is the tone making loop, there is one case for each combination of tones so that you may overly all notes on each other at the same time
-  while (flex1 > (flexbaseline + (x - 50)) || flex2 > (flexbaseline + x) || flex3 > (flexbaseline + x) || flex4 > (flexbaseline + x) || flex7 > (flexbaseline + x) || flex8 > (flexbaseline + x) || flex9 > (flexbaseline + x)) {
+  while (flex1 > (flexbaseline + (x - 150)) || flex2 > (flexbaseline + x) || flex3 > (flexbaseline + x) || flex4 > (flexbaseline + x) || flex7 > (flexbaseline + x) || flex8 > (flexbaseline + x) || flex9 > (flexbaseline + (x - 100))) {
+    aaa = micros();
     Serial.println("In Tone Loop");
     Serial.println("OCTAVE");
     Serial.println(octave);
@@ -457,7 +614,7 @@ void loop() {
 
 
 
-    if (flex1 > (flexbaseline + (x - 50))) {
+    if (flex1 > (flexbaseline + (x - 150))) {
       //depending on which effect is currently active, either make a sawTooth wave a triangleWave note or default to a squarewave note to be used with any other effects
       if (effect == 0 || effect == 1 || effect == 2) {
         squareWaveNote(0, p1);
@@ -557,7 +714,7 @@ void loop() {
       }
     }
 
-    if (flex8 > (flexbaseline + x)) {
+    if ((flex8 > (flexbaseline + x)) && (blackKeys == false)) {
       //depending on which effect is currently active, either make a sawTooth wave a triangleWave note or default to a squarewave note to be used with any other effects
       if (effect == 0 || effect == 1 || effect == 2) {
         squareWaveNote(5, p6);
@@ -577,7 +734,7 @@ void loop() {
       }
     }
 
-    if (flex9 > (flexbaseline + x)) {
+    if ((flex9 > (flexbaseline + (x - 100))) && (blackKeys == false)) {
       //depending on which effect is currently active, either make a sawTooth wave a triangleWave note or default to a squarewave note to be used with any other effects
       if (effect == 0 || effect == 1 || effect == 2) {
         squareWaveNote(6, p7);
@@ -627,10 +784,10 @@ void loop() {
     flex5 = flex5 / 3;
 
     if (serialconnection.available() > 4) {
-      Serial.println("reading right glove");
+      //Serial.println("reading right glove");
       doweupdate = serialconnection.readBytes(input, 5);
       if (doweupdate == 5) {
-        Serial.println("updating values on right glove");
+        //Serial.println("updating values on right glove");
         r1 = input[0] * 4;
         r2 = input[1] * 4;
         r3 = input[2] * 4;
@@ -639,18 +796,21 @@ void loop() {
       } else {
         if (doweupdate > 0) {
           Serial.println("throwing out junk values for right glove");
-          junk[0] = input[0];
+          while(serialconnection.available() > 0){
+          serialconnection.read();
+        }
+          /*junk[0] = input[0];
           junk[1] = input[1];
           junk[2] = input[2];
           junk[3] = input[3];
-          junk[4] = input[4];
+          junk[4] = input[4];*/
         }
       }
-  flex6 = r4;
+  flex6 = r1;
   flex7 = r2;
-  flex8 = r1;
-  flex9 = r5;
-  flex10 = r3;
+  flex8 = r3;
+  flex9 = r4;
+  flex10 = r5;
     }
 
     if (flex6 > (flexbaseline + x)) {
@@ -686,16 +846,19 @@ void loop() {
             r5 = input[4] * 4;
           } else {
             if (doweupdate > 0) {
-              junk[0] = input[0];
+              while(serialconnection.available() > 0){
+          serialconnection.read();
+        }
+              /*junk[0] = input[0];
               junk[1] = input[1];
               junk[2] = input[2];
               junk[3] = input[3];
-              junk[4] = input[4];
+              junk[4] = input[4];*/
             }
           }
         }
       }
-      flex6 = r4;
+      flex6 = r1;
       /*effect = 6;
       y = millis();
       while((millis() - y) < 150){
@@ -712,17 +875,7 @@ void loop() {
   }
 
   if (flex5 > (flexbaseline + (x + 50))) {
-    y = millis();
-      while((millis() - y) < 60){
-        yy = millis();
-        while((millis() - yy) < 15){
-        sawToothNote(6);
-        }
-        yy = millis();
-        while((millis() - yy) < 15){
-        sawToothNote(0);
-        }
-      }
+    delay(50);
     for (int i = 0; i < 5; i++) {
       flex5 += analogRead(5);
     }
@@ -733,15 +886,27 @@ void loop() {
       if (octave > 4) {
         octave = 0;
       }
-      
-      delay(100);
+
+      y = millis();
+      while((millis() - y) < 60){
+        yy = millis();
+        while((millis() - yy) < 15){
+        sawToothNote(6);
+        }
+        yy = millis();
+        while((millis() - yy) < 15){
+        sawToothNote(0);
+        }
+      }
+      delay(40);
     }
     focount = 2;
     focountlast = 1;
     fcount = 2;
 
-    if (octave == 0) {
-    notes[0] = NOTE_A1;
+    if(blackKeys == false){
+  if (octave == 1) {
+    notes[0] = NOTE_C1;
     notes[1] = NOTE_D1;
     notes[2] = NOTE_E1;
     notes[3] = NOTE_F1;
@@ -749,7 +914,7 @@ void loop() {
     notes[5] = NOTE_A1;
     notes[6] = NOTE_B1;
   } else {
-    if (octave == 1) {
+    if (octave == 2) {
       notes[0] = NOTE_C2;
       notes[1] = NOTE_D2;
       notes[2] = NOTE_E2;
@@ -758,7 +923,7 @@ void loop() {
       notes[5] = NOTE_A2;
       notes[6] = NOTE_B2;
     } else {
-      if (octave == 2) {
+      if (octave == 3) {
         notes[0] = NOTE_C3;
         notes[1] = NOTE_D3;
         notes[2] = NOTE_E3;
@@ -767,7 +932,7 @@ void loop() {
         notes[5] = NOTE_A3;
         notes[6] = NOTE_B3;
       } else {
-        if (octave == 3) {
+        if (octave == 4) {
           notes[0] = NOTE_C4;
           notes[1] = NOTE_D4;
           notes[2] = NOTE_E4;
@@ -776,7 +941,7 @@ void loop() {
           notes[5] = NOTE_A4;
           notes[6] = NOTE_B4;
         } else {
-          if (octave == 4) {
+          if (octave == 0) {
             notes[0] = NOTE_C5;
             notes[1] = NOTE_D5;
             notes[2] = NOTE_E5;
@@ -789,10 +954,236 @@ void loop() {
       }
     }
   }
+  }else{
+    if (octave == 0) {
+    notes[0] = NOTE_Db1;
+    notes[1] = NOTE_Eb1;
+    notes[2] = NOTE_Gb1;
+    notes[3] = NOTE_Ab1;
+    notes[4] = NOTE_Bb1;
+    notes[5] = NOTE_A1;
+    notes[6] = NOTE_B1;
+  } else {
+    if (octave == 1) {
+      notes[0] = NOTE_Db2;
+      notes[1] = NOTE_Eb2;
+      notes[2] = NOTE_Gb2;
+      notes[3] = NOTE_Ab2;
+      notes[4] = NOTE_Bb2;
+      notes[5] = NOTE_A2;
+      notes[6] = NOTE_B2;
+    } else {
+      if (octave == 2) {
+        notes[0] = NOTE_Db3;
+        notes[1] = NOTE_Eb3;
+        notes[2] = NOTE_Gb3;
+        notes[3] = NOTE_Ab3;
+        notes[4] = NOTE_Bb3;
+        notes[5] = NOTE_A3;
+        notes[6] = NOTE_B3;
+      } else {
+        if (octave == 3) {
+          notes[0] = NOTE_Db4;
+          notes[1] = NOTE_Eb4;
+          notes[2] = NOTE_Gb4;
+          notes[3] = NOTE_Ab4;
+          notes[4] = NOTE_Bb4;
+          notes[5] = NOTE_A4;
+          notes[6] = NOTE_B4;
+        } else {
+          if (octave == 4) {
+            notes[0] = NOTE_Db5;
+            notes[1] = NOTE_Eb5;
+            notes[2] = NOTE_Gb5;
+            notes[3] = NOTE_Ab5;
+            notes[4] = NOTE_Bb5;
+            notes[5] = NOTE_A5;
+            notes[6] = NOTE_B5;
+          }
+        }
+      }
+    }
+  }
+  }
 
     
   }
-    
+
+  if (flex10 > (flexbaseline + (x - 100))) {
+      
+      blackKeys = !blackKeys;
+      y = millis();
+      while((millis() - y) < 60){
+        squareWaveNote(6, 0);
+      }
+      y = millis();
+      while ((millis() - y) < 600) {
+        if (serialconnection.available() > 4) {
+          doweupdate = serialconnection.readBytes(input, 5);
+          if (doweupdate == 5) {
+            r1 = input[0] * 4;
+            r2 = input[1] * 4;
+            r3 = input[2] * 4;
+            r4 = input[3] * 4;
+            r5 = input[4] * 4;
+          } else {
+             if (doweupdate > 0) {
+        Serial.println("throwing out junk for right glove outside tone loop");
+        while(serialconnection.available() > 0){
+          serialconnection.read();
+        }
+        /*junk[0] = input[0];
+        junk[1] = input[1];
+        junk[2] = input[2];
+        junk[3] = input[3];
+        junk[4] = input[4];*/
+      }
+          }
+        }
+        flex6 = r1;
+        flex7 = r2;
+        flex8 = r3;
+        flex9 = r4;
+        flex10 = r5;
+      }
+      /*effect = 6;
+      y = millis();
+      while((millis() - y) < 150){
+      sawToothNote(6);
+      //sawToothNote();*/
+      //}
+      focount = 2;
+      focountlast = 1;
+      fcount = 2;
+      
+      //effect = et;
+
+      if(blackKeys == false){
+  if (octave == 1) {
+    notes[0] = NOTE_C1;
+    notes[1] = NOTE_D1;
+    notes[2] = NOTE_E1;
+    notes[3] = NOTE_F1;
+    notes[4] = NOTE_G1;
+    notes[5] = NOTE_A1;
+    notes[6] = NOTE_B1;
+  } else {
+    if (octave == 2) {
+      notes[0] = NOTE_C2;
+      notes[1] = NOTE_D2;
+      notes[2] = NOTE_E2;
+      notes[3] = NOTE_F2;
+      notes[4] = NOTE_G2;
+      notes[5] = NOTE_A2;
+      notes[6] = NOTE_B2;
+    } else {
+      if (octave == 3) {
+        notes[0] = NOTE_C3;
+        notes[1] = NOTE_D3;
+        notes[2] = NOTE_E3;
+        notes[3] = NOTE_F3;
+        notes[4] = NOTE_G3;
+        notes[5] = NOTE_A3;
+        notes[6] = NOTE_B3;
+      } else {
+        if (octave == 4) {
+          notes[0] = NOTE_C4;
+          notes[1] = NOTE_D4;
+          notes[2] = NOTE_E4;
+          notes[3] = NOTE_F4;
+          notes[4] = NOTE_G4;
+          notes[5] = NOTE_A4;
+          notes[6] = NOTE_B4;
+        } else {
+          if (octave == 0) {
+            notes[0] = NOTE_C5;
+            notes[1] = NOTE_D5;
+            notes[2] = NOTE_E5;
+            notes[3] = NOTE_F5;
+            notes[4] = NOTE_G5;
+            notes[5] = NOTE_A5;
+            notes[6] = NOTE_B5;
+          }
+        }
+      }
+    }
+  }
+  }else{
+    if (octave == 0) {
+    notes[0] = NOTE_Db1;
+    notes[1] = NOTE_Eb1;
+    notes[2] = NOTE_Gb1;
+    notes[3] = NOTE_Ab1;
+    notes[4] = NOTE_Bb1;
+    notes[5] = NOTE_A1;
+    notes[6] = NOTE_B1;
+  } else {
+    if (octave == 1) {
+      notes[0] = NOTE_Db2;
+      notes[1] = NOTE_Eb2;
+      notes[2] = NOTE_Gb2;
+      notes[3] = NOTE_Ab2;
+      notes[4] = NOTE_Bb2;
+      notes[5] = NOTE_A2;
+      notes[6] = NOTE_B2;
+    } else {
+      if (octave == 2) {
+        notes[0] = NOTE_Db3;
+        notes[1] = NOTE_Eb3;
+        notes[2] = NOTE_Gb3;
+        notes[3] = NOTE_Ab3;
+        notes[4] = NOTE_Bb3;
+        notes[5] = NOTE_A3;
+        notes[6] = NOTE_B3;
+      } else {
+        if (octave == 3) {
+          notes[0] = NOTE_Db4;
+          notes[1] = NOTE_Eb4;
+          notes[2] = NOTE_Gb4;
+          notes[3] = NOTE_Ab4;
+          notes[4] = NOTE_Bb4;
+          notes[5] = NOTE_A4;
+          notes[6] = NOTE_B4;
+        } else {
+          if (octave == 4) {
+            notes[0] = NOTE_Db5;
+            notes[1] = NOTE_Eb5;
+            notes[2] = NOTE_Gb5;
+            notes[3] = NOTE_Ab5;
+            notes[4] = NOTE_Bb5;
+            notes[5] = NOTE_A5;
+            notes[6] = NOTE_B5;
+          }
+        }
+      }
+    }
+  }
+  }
+
+    }
+    bbb = micros() - aaa;
+    Serial.println(bbb);
+    Serial.print(bbb);
+    Serial.print("   ");
+    Serial.print(bbb);
+    Serial.print("   ");
+    Serial.print(bbb);
+    Serial.print("   ");
+    Serial.print(bbb);
+    Serial.print("   ");
+    Serial.print(bbb);
+    Serial.print("   ");
+    Serial.print(bbb);
+    Serial.print("   ");
+    Serial.print(bbb);
+    Serial.print("   ");
+    Serial.print(bbb);
+    Serial.print("   ");
+    Serial.print(bbb);
+    Serial.print("   ");
+    Serial.print(bbb);
+    Serial.print("   ");
+    Serial.println(bbb);
   }
 
 
@@ -811,17 +1202,18 @@ void squareWaveNote(int note, float p) {
   } else {
     if (effect == 1) {
       //fcount++;
-      rv += (5 - octave)*30;
-      if(rv > (3*(notes[note])/4)){
+      
+      rv += (notes[note])/((4*octave) + 3);
+      if(rv > notes[note]){
         rv = 0;
       }
       //rv = rv + (rv/(octave + 2));
       Serial.println("Making Flange SquareWave Tone");
       digitalWrite(s, HIGH);
       delayMicroseconds((notes[note]));
-      delayMicroseconds(rv);
       digitalWrite(s, LOW);
-      delayMicroseconds(((notes[note])) - rv);
+      delayMicroseconds(notes[note]);
+      delayMicroseconds(rv);
       
       /*if (fcount > 15) {
         fcount = 2;
@@ -829,11 +1221,11 @@ void squareWaveNote(int note, float p) {
     } else {
       if (effect == 2) {
         Serial.println("Making Frequency Oscillating SquareWave Tone");
-        fonote = notes[note] + (focount * (notes[note])) / 20;
-        if (focount > (3 + octave)) {
+        fonote = notes[note] + (focount * (notes[note])) / (octave + 5);
+        if (focount > (2 + (octave/2))) {
           focount = focountlast - 1;
         }
-        if (focount < (-3 - octave)) {
+        if (focount < (-1 - (octave)/2)) {
           focount = focountlast + 1;
         }
         Serial.println(p);
@@ -858,145 +1250,138 @@ void squareWaveNote(int note, float p) {
 
 //function that simulates a triangleWave wave using multiple squarewaves to create one period of a triangleWave tone at frequency 'note'
 void triangleWaveNote(int note) {
+  
   if (effect == 3) {
     Serial.println("Making Regular triangleWave Tone");
     digitalWrite(s, HIGH);
-    delayMicroseconds(((notes[note]) / 30));
+    delayMicroseconds(((notes[note]) / 32));
     digitalWrite(s, LOW);
-    delayMicroseconds(6 * ((notes[note]) / 30));
+    delayMicroseconds(6 * ((notes[note]) / 32));
     digitalWrite(s, HIGH);
-    delayMicroseconds(2 * ((notes[note]) / 30));
+    delayMicroseconds(2 * ((notes[note]) / 32));
     digitalWrite(s, LOW);
-    delayMicroseconds(5 * ((notes[note]) / 30));
+    delayMicroseconds(5 * ((notes[note]) / 32));
     digitalWrite(s, HIGH);
-    delayMicroseconds(3 * ((notes[note]) / 30));
+    delayMicroseconds(3 * ((notes[note]) / 32));
     digitalWrite(s, LOW);
-    delayMicroseconds(4 * ((notes[note]) / 30));
+    delayMicroseconds(4 * ((notes[note]) / 32));
     digitalWrite(s, HIGH);
-    delayMicroseconds(4 * ((notes[note]) / 30));
+    delayMicroseconds(4 * ((notes[note]) / 32));
     digitalWrite(s, LOW);
-    delayMicroseconds(2 * ((notes[note]) / 30));
+    delayMicroseconds(3 * ((notes[note]) / 32));
     digitalWrite(s, HIGH);
-    delayMicroseconds(6 * ((notes[note]) / 30));
+    delayMicroseconds(6 * ((notes[note]) / 32));
     digitalWrite(s, LOW);
-    delayMicroseconds(((notes[note]) / 30));
+    delayMicroseconds(2 * ((notes[note]) / 32));
     digitalWrite(s, HIGH);
-    delayMicroseconds(4 * ((notes[note]) / 30));
+    delayMicroseconds(4 * ((notes[note]) / 32));
     digitalWrite(s, LOW);
-    delayMicroseconds(2 * ((notes[note]) / 30));
+    delayMicroseconds(3 * ((notes[note]) / 32));
     digitalWrite(s, HIGH);
-    delayMicroseconds(3 * ((notes[note]) / 30));
+    delayMicroseconds(3 * ((notes[note]) / 32));
     digitalWrite(s, LOW);
-    delayMicroseconds(4 * ((notes[note]) / 30));
+    delayMicroseconds(4 * ((notes[note]) / 32));
     digitalWrite(s, HIGH);
-    delayMicroseconds(2 * ((notes[note]) / 30));
+    delayMicroseconds(2 * ((notes[note]) / 32));
     digitalWrite(s, LOW);
-    delayMicroseconds(5 * ((notes[note]) / 30));
+    delayMicroseconds(5 * ((notes[note]) / 32));
     digitalWrite(s, HIGH);
-    delayMicroseconds(((notes[note]) / 30));
+    delayMicroseconds(((notes[note]) / 32));
     digitalWrite(s, LOW);
-    delayMicroseconds(6 * ((notes[note]) / 30));
-    digitalWrite(s, LOW);
-    delayMicroseconds(notes[note]);
+    delayMicroseconds(6 * ((notes[note]) / 32));
   } else {
     if(effect == 4){
       Serial.println("Making Flange triangleWave Tone");
       //fcount++;
-      rv += (5 - octave)*50;
-      if(rv > (3*(notes[note])/4)){
+      rv += (notes[note])/((4*octave) + 3);
+      if(rv > notes[note]){
         rv = 0;
       }
     digitalWrite(s, HIGH);
-    delayMicroseconds(((notes[note]) / 30));
+    delayMicroseconds(((notes[note]) / 32));
     digitalWrite(s, LOW);
-    delayMicroseconds(6 * ((notes[note]) / 30));
+    delayMicroseconds(6 * ((notes[note] + rv) / 32));
     digitalWrite(s, HIGH);
-    delayMicroseconds(2 * ((notes[note]) / 30));
+    delayMicroseconds(2 * ((notes[note]) / 32));
     digitalWrite(s, LOW);
-    delayMicroseconds(5 * ((notes[note]) / 30));
+    delayMicroseconds(5 * ((notes[note] + rv) / 32));
     digitalWrite(s, HIGH);
-    delayMicroseconds(3 * ((notes[note]) / 30));
+    delayMicroseconds(3 * ((notes[note]) / 32));
     digitalWrite(s, LOW);
-    delayMicroseconds(4 * ((notes[note]) / 30));
+    delayMicroseconds(4 * ((notes[note] + rv) / 32));
     digitalWrite(s, HIGH);
-    delayMicroseconds(4 * ((notes[note]) / 30));
+    delayMicroseconds(4 * ((notes[note]) / 32));
     digitalWrite(s, LOW);
-    delayMicroseconds(2 * ((notes[note]) / 30));
+    delayMicroseconds(3 * ((notes[note] + rv) / 32));
     digitalWrite(s, HIGH);
-    delayMicroseconds((6 * (notes[note])) / 30);
-    delayMicroseconds(notes[note] - rv);
+    delayMicroseconds(6 * ((notes[note]) / 32));
     digitalWrite(s, LOW);
-    delayMicroseconds(((notes[note]) / 30));
+    delayMicroseconds(2 * ((notes[note] + rv) / 32));
     digitalWrite(s, HIGH);
-    delayMicroseconds(4 * ((notes[note]) / 30));
+    delayMicroseconds(4 * ((notes[note]) / 32));
     digitalWrite(s, LOW);
-    delayMicroseconds(2 * ((notes[note]) / 30));
+    delayMicroseconds(3 * ((notes[note] + rv) / 32));
     digitalWrite(s, HIGH);
-    delayMicroseconds(3 * ((notes[note]) / 30));
+    delayMicroseconds(3 * ((notes[note]) / 32));
     digitalWrite(s, LOW);
-    delayMicroseconds(4 * ((notes[note]) / 30));
+    delayMicroseconds(4 * ((notes[note] + rv) / 32));
     digitalWrite(s, HIGH);
-    delayMicroseconds(2 * ((notes[note]) / 30));
+    delayMicroseconds(2 * ((notes[note]) / 32));
     digitalWrite(s, LOW);
-    delayMicroseconds(5 * ((notes[note]) / 30));
+    delayMicroseconds(5 * ((notes[note] + rv) / 32));
     digitalWrite(s, HIGH);
-    delayMicroseconds(((notes[note]) / 30));
+    delayMicroseconds(((notes[note]) / 32));
     digitalWrite(s, LOW);
-    delayMicroseconds(6 * ((notes[note]) / 30));
-    digitalWrite(s, LOW);
-    delayMicroseconds(notes[note]);
-    delayMicroseconds(rv);
+    delayMicroseconds(6 * ((notes[note] + rv) / 32));
     /*if (fcount > 10) {
         fcount = 2;
       }*/
     }else{
     if (effect == 5) {
       Serial.println("Making Frequency Oscillating triangleWave Tone");
-      fonote = notes[note] + (focount * (notes[note])) / 20;
-      if (focount > (3 + octave)) {
-        focount = focountlast - 1;
-      }
-      if (focount < (-3 - octave)) {
-        focount = focountlast + 1;
-      }
+      fonote = notes[note] + (focount * (notes[note])) / (octave + 5);
+        if (focount > (2 + (octave/2))) {
+          focount = focountlast - 1;
+        }
+        if (focount < (-1 - (octave)/2)) {
+          focount = focountlast + 1;
+        }
       digitalWrite(s, HIGH);
-      delayMicroseconds(((fonote) / 30));
+      delayMicroseconds(((fonote) / 32));
       digitalWrite(s, LOW);
-      delayMicroseconds(6 * ((fonote) / 30));
+      delayMicroseconds(6 * ((fonote) / 32));
       digitalWrite(s, HIGH);
-      delayMicroseconds(2 * ((fonote) / 30));
+      delayMicroseconds(2 * ((fonote) / 32));
       digitalWrite(s, LOW);
-      delayMicroseconds(5 * ((fonote) / 30));
+      delayMicroseconds(5 * ((fonote) / 32));
       digitalWrite(s, HIGH);
-      delayMicroseconds(3 * ((fonote) / 30));
+      delayMicroseconds(3 * ((fonote) / 32));
       digitalWrite(s, LOW);
-      delayMicroseconds(4 * ((fonote) / 30));
+      delayMicroseconds(4 * ((fonote) / 32));
       digitalWrite(s, HIGH);
-      delayMicroseconds(4 * ((fonote) / 30));
+      delayMicroseconds(4 * ((fonote) / 32));
       digitalWrite(s, LOW);
-      delayMicroseconds(2 * ((fonote) / 30));
+      delayMicroseconds(3 * ((fonote) / 32));
       digitalWrite(s, HIGH);
-      delayMicroseconds(6 * ((fonote) / 30));
+      delayMicroseconds(6 * ((fonote) / 32));
       digitalWrite(s, LOW);
-      delayMicroseconds(((fonote) / 30));
+      delayMicroseconds(2 * ((fonote) / 32));
       digitalWrite(s, HIGH);
-      delayMicroseconds(4 * ((fonote) / 30));
+      delayMicroseconds(4 * ((fonote) / 32));
       digitalWrite(s, LOW);
-      delayMicroseconds(2 * ((fonote) / 30));
+      delayMicroseconds(3 * ((fonote) / 32));
       digitalWrite(s, HIGH);
-      delayMicroseconds(3 * ((fonote) / 30));
+      delayMicroseconds(3 * ((fonote) / 32));
       digitalWrite(s, LOW);
-      delayMicroseconds(4 * ((fonote) / 30));
+      delayMicroseconds(4 * ((fonote) / 32));
       digitalWrite(s, HIGH);
-      delayMicroseconds(2 * ((fonote) / 30));
+      delayMicroseconds(2 * ((fonote) / 32));
       digitalWrite(s, LOW);
-      delayMicroseconds(5 * ((fonote) / 30));
+      delayMicroseconds(5 * ((fonote) / 32));
       digitalWrite(s, HIGH);
-      delayMicroseconds(((fonote) / 30));
+      delayMicroseconds(((fonote) / 32));
       digitalWrite(s, LOW);
-      delayMicroseconds(6 * ((fonote) / 30));
-      digitalWrite(s, LOW);
-      delayMicroseconds(fonote);
+      delayMicroseconds(6 * ((fonote) / 32));
       if (focountlast < focount) {
         focountlast = focount;
         focount++;
@@ -1040,8 +1425,8 @@ void triangleWaveNote(int note) {
       if((effect == 7) || (effect == 1) || (effect == 4) || (effect == 10)){
         Serial.println("Making Flange sawTooth Tone");
         //fcount++;
-      rv += (5 - octave)*50;
-      if(rv > (3*(notes[note])/4)){
+      rv += (notes[note])/((4*octave) + 3);
+      if(rv > notes[note]){
         rv = 0;
       }
     digitalWrite(s, HIGH);
@@ -1062,22 +1447,21 @@ void triangleWaveNote(int note) {
     delayMicroseconds(2 * ((notes[note]) / 30));
     digitalWrite(s, HIGH);
     delayMicroseconds(5 * ((notes[note]) / 30));
-    delayMicroseconds(rv);
     digitalWrite(s, LOW);
-    delayMicroseconds(notes[note] - rv);
+    delayMicroseconds(rv);
     /*if (fcount > 10) {
         fcount = 2;
       }*/
       }else{
         if((effect == 8) || (effect == 2) || (effect == 5) || (effect == 11)){
           Serial.println("Making Frequency Oscillation sawTooth Tone");
-          fonote = notes[note] + (focount * (notes[note])) / 20;
-      if (focount > (3 + octave)) {
-        focount = focountlast - 1;
-      }
-      if (focount < (-3 - octave)) {
-        focount = focountlast + 1;
-      }
+          fonote = notes[note] + (focount * (notes[note])) / (octave + 5);
+        if (focount > (2 + (octave/2))) {
+          focount = focountlast - 1;
+        }
+        if (focount < (-1 - (octave)/2)) {
+          focount = focountlast + 1;
+        }
       digitalWrite(s, HIGH);
     delayMicroseconds(((fonote) / 30));
     digitalWrite(s, LOW);
@@ -1112,151 +1496,250 @@ void triangleWaveNote(int note) {
   }
 
   void halfSine(int note) {
-    if((effect == 9)){
-    Serial.println("Making Regular halfSine Tone");
-    digitalWrite(s, HIGH);
-    delayMicroseconds(2 *((notes[note]) / 80));
-    digitalWrite(s, LOW);
-    delayMicroseconds(2 * ((notes[note]) / 80));
-    digitalWrite(s, HIGH);
-    delayMicroseconds(3 * ((notes[note]) / 80));
-    digitalWrite(s, LOW);
-    delayMicroseconds(3 *((notes[note]) / 80));
-    digitalWrite(s, HIGH);
-    delayMicroseconds(4*((notes[note]) / 80));
-    digitalWrite(s, LOW);
-    delayMicroseconds(4 * ((notes[note]) / 80));
-    digitalWrite(s, HIGH);
-    delayMicroseconds(6*((notes[note]) / 80));
-    digitalWrite(s, LOW);
-    delayMicroseconds(4 * ((notes[note]) / 80));
-    digitalWrite(s, HIGH);
-    delayMicroseconds(10*((notes[note]) / 80));
-    digitalWrite(s, LOW);
-    delayMicroseconds(4 * ((notes[note]) / 80));
-    digitalWrite(s, HIGH);
-    delayMicroseconds(10*((notes[note]) / 80));
-    digitalWrite(s, LOW);
-    delayMicroseconds(4 * ((notes[note]) / 80));
-    digitalWrite(s, HIGH);
-    delayMicroseconds(6*((notes[note]) / 80));
-    digitalWrite(s, LOW);
-    delayMicroseconds(4 * ((notes[note]) / 80));
-    digitalWrite(s, HIGH);
-    delayMicroseconds(4*((notes[note]) / 80));
-    digitalWrite(s, LOW);
-    delayMicroseconds(4*((notes[note]) / 80));
-    digitalWrite(s, HIGH);
-    delayMicroseconds(3 * ((notes[note]) / 80));
-    digitalWrite(s, LOW);
-    delayMicroseconds(3 *((notes[note]) / 80));
-    digitalWrite(s, HIGH);
-    delayMicroseconds(2 * ((notes[note]) / 80));
-    digitalWrite(s, LOW);
-    delayMicroseconds(2 *((notes[note]) / 80));
-    delayMicroseconds(notes[note]);
-    }else{
-      if((effect == 10)){
-        Serial.println("Making Flange halfSine Tone");
-        rv += (5 - octave)*50;
-      if(rv > (3*(notes[note])/4)){
+    if((effect == 10)){
+      rv += (notes[note])/((4*octave) + 3);
+      if(rv > notes[note]){
         rv = 0;
       }
-      digitalWrite(s, HIGH);
-    delayMicroseconds(2 *((notes[note]) / 80));
-    digitalWrite(s, LOW);
-    delayMicroseconds(2 * ((notes[note]) / 80));
+    Serial.println("Making Regular halfSine Tone");
     digitalWrite(s, HIGH);
-    delayMicroseconds(3 * ((notes[note]) / 80));
+    delayMicroseconds(((notes[note]) / 115));
     digitalWrite(s, LOW);
-    delayMicroseconds(3 *((notes[note]) / 80));
+    delayMicroseconds(9 * ((notes[note]) / 115));
     digitalWrite(s, HIGH);
-    delayMicroseconds(4*((notes[note]) / 80));
+    delayMicroseconds(2 *((notes[note]) / 115));
     digitalWrite(s, LOW);
-    delayMicroseconds(4 * ((notes[note]) / 80));
+    delayMicroseconds(8 * ((notes[note]) / 115));
     digitalWrite(s, HIGH);
-    delayMicroseconds(6*((notes[note]) / 80));
+    delayMicroseconds(3 * ((notes[note]) / 115));
     digitalWrite(s, LOW);
-    delayMicroseconds(4 * ((notes[note]) / 80));
+    delayMicroseconds(7 *((notes[note]) / 115));
     digitalWrite(s, HIGH);
-    delayMicroseconds(10*((notes[note]) / 80));
-    delayMicroseconds(rv);
+    delayMicroseconds(4*((notes[note]) / 115));
     digitalWrite(s, LOW);
-    delayMicroseconds(4 * ((notes[note]) / 80));
+    delayMicroseconds(6 * ((notes[note]) / 115));
     digitalWrite(s, HIGH);
-    delayMicroseconds(10*((notes[note]) / 80));
+    delayMicroseconds(5*((notes[note]) / 115));
     digitalWrite(s, LOW);
-    delayMicroseconds(4 * ((notes[note]) / 80));
+    delayMicroseconds(5 * ((notes[note]) / 115));
     digitalWrite(s, HIGH);
-    delayMicroseconds(6*((notes[note]) / 80));
+    delayMicroseconds(6*((notes[note]) / 115));
     digitalWrite(s, LOW);
-    delayMicroseconds(4 * ((notes[note]) / 80));
+    delayMicroseconds(4 * ((notes[note]) / 115));
     digitalWrite(s, HIGH);
-    delayMicroseconds(4*((notes[note]) / 80));
+    delayMicroseconds(7*((notes[note]) / 115));
     digitalWrite(s, LOW);
-    delayMicroseconds(4*((notes[note]) / 80));
+    delayMicroseconds(3 * ((notes[note]) / 115));
     digitalWrite(s, HIGH);
-    delayMicroseconds(3 * ((notes[note]) / 80));
+    delayMicroseconds(7*((notes[note]) / 115));
     digitalWrite(s, LOW);
-    delayMicroseconds(3 *((notes[note]) / 80));
+    delayMicroseconds(3 * ((notes[note]) / 115));
     digitalWrite(s, HIGH);
-    delayMicroseconds(2 * ((notes[note]) / 80));
+    delayMicroseconds(8*((notes[note]) / 115));
     digitalWrite(s, LOW);
-    delayMicroseconds(2 *((notes[note]) / 80));
-    delayMicroseconds(notes[note]);
-    delayMicroseconds(notes[note] - rv);
+    delayMicroseconds(2 * ((notes[note]) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(8*((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(2 * ((notes[note]) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(9 * ((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(((notes[note]) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(9 * ((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(((notes[note]) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(9 * ((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(((notes[note]) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(8*((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(2 * ((notes[note] + rv) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(8*((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(2 * ((notes[note] + rv) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(7*((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(3 * ((notes[note] + rv) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(7*((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(3 * ((notes[note] + rv) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(6*((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(4 * ((notes[note] + rv) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(5 * ((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(5 * ((notes[note] + rv) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(4*((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(6*((notes[note] + rv) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(3 * ((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(7 *((notes[note] + rv) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(2 * ((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(8 *((notes[note] + rv) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(1 * ((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(9 *((notes[note] + rv) / 115));
+    }else{
+      if((effect == 9)){
+        Serial.println("Making halfSine Tone");
+    digitalWrite(s, HIGH);
+    delayMicroseconds(((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(9 * ((notes[note]) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(2 *((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(8 * ((notes[note]) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(3 * ((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(7 *((notes[note]) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(4*((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(6 * ((notes[note]) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(5*((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(5 * ((notes[note]) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(6*((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(4 * ((notes[note]) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(7*((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(3 * ((notes[note]) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(7*((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(3 * ((notes[note]) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(8*((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(2 * ((notes[note]) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(8*((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(2 * ((notes[note]) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(9 * ((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(((notes[note]) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(9 * ((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(((notes[note]) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(9 * ((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(((notes[note]) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(8*((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(2 * ((notes[note]) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(8*((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(2 * ((notes[note]) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(7*((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(3 * ((notes[note]) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(7*((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(3 * ((notes[note]) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(6*((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(4 * ((notes[note]) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(5 * ((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(5 * ((notes[note]) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(4*((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(6*((notes[note]) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(3 * ((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(7 *((notes[note]) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(2 * ((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(8 *((notes[note]) / 115));
+    digitalWrite(s, HIGH);
+    delayMicroseconds(1 * ((notes[note]) / 115));
+    digitalWrite(s, LOW);
+    delayMicroseconds(9 *((notes[note]) / 115));
       }else{
         if(effect == 11){
           Serial.println("Making Frequency Oscillating halfSine Tone");
-        fonote = notes[note] + (focount * (notes[note])) / 20;
-        if (focount > (3 + octave)) {
+        fonote = notes[note] + (focount * (notes[note])) / (octave + 5);
+        if (focount > (2 + (octave/2))) {
           focount = focountlast - 1;
         }
-        if (focount < (-3 - octave)) {
+        if (focount < (-1 - (octave)/2)) {
           focount = focountlast + 1;
         }
 
-        Serial.println("Making Regular halfSine Tone");
     digitalWrite(s, HIGH);
-    delayMicroseconds(2 *((fonote) / 80));
+    delayMicroseconds(2 *((fonote) / 104));
     digitalWrite(s, LOW);
-    delayMicroseconds(2 * ((fonote) / 80));
+    delayMicroseconds(8 * ((fonote) / 104));
     digitalWrite(s, HIGH);
-    delayMicroseconds(3 * ((fonote) / 80));
+    delayMicroseconds(3 * ((fonote) / 104));
     digitalWrite(s, LOW);
-    delayMicroseconds(3 *((fonote) / 80));
+    delayMicroseconds(7 *((fonote) / 104));
     digitalWrite(s, HIGH);
-    delayMicroseconds(4*((fonote) / 80));
+    delayMicroseconds(4*((fonote) / 104));
     digitalWrite(s, LOW);
-    delayMicroseconds(4 * ((fonote) / 80));
+    delayMicroseconds(6 * ((fonote) / 104));
     digitalWrite(s, HIGH);
-    delayMicroseconds(6*((fonote) / 80));
+    delayMicroseconds(6*((fonote) / 104));
     digitalWrite(s, LOW);
-    delayMicroseconds(4 * ((fonote) / 80));
+    delayMicroseconds(4 * ((fonote) / 104));
     digitalWrite(s, HIGH);
-    delayMicroseconds(10*((fonote) / 80));
+    delayMicroseconds(10*((fonote) / 104));
     digitalWrite(s, LOW);
-    delayMicroseconds(4 * ((fonote) / 80));
+    delayMicroseconds(2 * ((fonote) / 104));
     digitalWrite(s, HIGH);
-    delayMicroseconds(10*((fonote) / 80));
+    delayMicroseconds(10*((fonote) / 104));
     digitalWrite(s, LOW);
-    delayMicroseconds(4 * ((fonote) / 80));
+    delayMicroseconds(2 * ((fonote) / 104));
     digitalWrite(s, HIGH);
-    delayMicroseconds(6*((fonote) / 80));
+    delayMicroseconds(6*((fonote) / 104));
     digitalWrite(s, LOW);
-    delayMicroseconds(4 * ((fonote) / 80));
+    delayMicroseconds(4 * ((fonote) / 104));
     digitalWrite(s, HIGH);
-    delayMicroseconds(4*((fonote) / 80));
+    delayMicroseconds(4*((fonote) / 104));
     digitalWrite(s, LOW);
-    delayMicroseconds(4*((fonote) / 80));
+    delayMicroseconds(6*((fonote) / 104));
     digitalWrite(s, HIGH);
-    delayMicroseconds(3 * ((fonote) / 80));
+    delayMicroseconds(3 * ((fonote) / 104));
     digitalWrite(s, LOW);
-    delayMicroseconds(3 *((fonote) / 80));
+    delayMicroseconds(7 *((fonote) / 104));
     digitalWrite(s, HIGH);
-    delayMicroseconds(2 * ((fonote) / 80));
+    delayMicroseconds(2 * ((fonote) / 104));
     digitalWrite(s, LOW);
-    delayMicroseconds(2 *((fonote) / 80));
+    delayMicroseconds(8 *((fonote) / 104));
     delayMicroseconds(fonote);
         if (focountlast < focount) {
       focountlast = focount;
