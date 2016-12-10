@@ -201,7 +201,9 @@ void loop() {
   if ((rebaseline % 10 == 0)){
     if(flex1 < (flexbaseline + x) && flex2 < (flexbaseline + x) && flex3 < (flexbaseline + x) && flex4 < (flexbaseline + x) && flex7 < (flexbaseline + x) && flex8 < (flexbaseline + x) && flex9 < (flexbaseline + x)){
     if((flex6 != 0) && (flex7 != 0) && (flex8 != 0) && (flex9 != 0) && (flex10 != 0)) {
-  
+  while(serialconnection.available() > 0){
+          serialconnection.read();
+        }
     flexbaseline = (analogRead(0) + analogRead(1) + analogRead(2) + analogRead(3) + analogRead(5)+ flex6 + flex7 + flex8 + flex9 + flex10) / 10;
     while (millis() - y < 100) {
       flex1 = analogRead(0);
